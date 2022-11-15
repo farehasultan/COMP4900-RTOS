@@ -1,0 +1,15 @@
+{
+  "name": "4900no-c",
+  "version": "1.0.0",
+  "description": "middleman and client code",
+  "main": "middleman.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ip": "^1.1.8",
+    "net": "^1.0.2"
+  }
+}
