@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>F1 Simulator</title>
+  </head>
+
+  <body onload="init()">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/client.js"></script>
+      <div>
+      <h1>Checksum Calculator (for now)</h1>
+      Enter a message and have it sent to the server. You will get back a response<br>
+      Message: <input type="textbox" id="messageinput" size="50">
+      <button type="button" id="messagesend" onclick="messagesend()">Send</button><br>
+    </div>
+    <h2>Returned Message</h2>
+    <div id="results_div"></div>
+
+  </body>
+
+</html>
