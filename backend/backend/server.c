@@ -12,6 +12,15 @@
 #define MAX_STRING_LEN 255  // Max string length for the server's buffer
 
 int calculate_checksum(char *text);
+// declare a struct with two properties
+// instantiate a new struct
+struct Car {
+  int engine_start;
+  char someString[MAX_STRING_LEN];
+  float rpm;
+  int fuel_amount;
+} car;
+
 
 int main() {
 	int serverSocket, clientSocket;
@@ -60,14 +69,14 @@ int main() {
 		// Go into infinite loop to talk to client
 		while (1) {
 			// Get the message from the client
-			bytesRcv = recv(clientSocket, buffer, MAX_STRING_LEN, 0);
-			buffer[bytesRcv] = 0; // put a 0 at the end so we can display the string
-			printf("[SERVER] Received client request: %s\n", buffer);
+			recv(clientSocket, &car, sizeof(car), 0);
+			printf("[SERVER] Received client request\n");
+			printf("Message received is: engine_start = %d and someString is %s \n", car.engine_start, car.someString);
 
-			// Respond with the checksum
-			snprintf(response, MAX_STRING_LEN, "%d", calculate_checksum(buffer));
-			printf("[SERVER] Sending \"%s\" to client\n", response);
-			send(clientSocket, response, strlen(response), 0);
+
+			printf("[SERVER] Sending back data ! \n");
+			strncpy(car.someString, "Running", MAX_STRING_LEN);
+			send(clientSocket, &car, sizeof(car), 0);
 			//if ((strcmp(buffer,"done") == 0) || (strcmp(buffer,"stop") == 0))
 				break;
 		}
@@ -90,3 +99,5 @@ int calculate_checksum(char *text) {
 		cksum += *c;
 	return cksum;
 }
+
+

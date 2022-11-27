@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "ip": "^1.1.8",
-    "net": "^1.0.2"
+    "net": "^1.0.2",
+    "shared-structs": "^1.4.1"
   }
 }
