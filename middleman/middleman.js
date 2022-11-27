@@ -1,43 +1,119 @@
-const net = require('net');
-const ip = require('ip');
-console.log(ip.address())
-ADDRESS = ip.address()
-PORTNUM = 3000
+//purpose: middleman, act as a client to C/QNX, act as server to browser
 
-var server = net.createServer(); //we are server, not client
-server.listen(PORTNUM, ADDRESS, (client) => {
-    //console.log(`opened server on port:${PORTNUM}, address:${server.address().address}`)
-    console.log("opened server with ", server.address())
+//you need to use npm install and run node middleman.js to run this.
+//when the C server stops, the middleman continues running because...
+//...express is unrelated to the C<->middleman communication. express is...
+//... just for middleman<->client/browser.
+//send the message 'stop' to stop the C server.
+//use POSTMAN to test sending a get request if you cant use the frontend.
+//for example, GET http://localhost:3000/checksum?message=test .
+//the middleman can only so far connect to the server when it is run for the...
+//...first time.
+//if the middleman dies while it is connected to the server, the server may...
+//...probably enter an infinite loop.
 
+const express = require('express'); //to make middleman serve browser/client
+const net = require('net'); //to talk to C/QNX
+const fs = require("fs"); //so the middleman can read files
+const app = express();
+
+app.use(express.static("static")); //serve client resources
+app.use(express.json()); //automatically parse json
+
+//const ip = require('ip');
+//console.log(ip.address())
+//ADDRESS = ip.address()
+//PORTNUM = 3000
+ADDRESS = "192.168.56.103"  // Address assigned by host bridge for QNX VM
+PORTNUM = 6000  // The port used by the server
+
+//for HTTP to work we are forced to use global variables and waits
+//ideally we drop HTTP for websockets
+var connected = false;
+var message = undefined;
+var sent = false;
+
+//communication with C/QNX
+var client = new net.Socket();
+client.connect(PORTNUM, ADDRESS, () => {
+    console.log('connected to server?');
+    connected = true;
+    //client.write('test');
 })
-server.on("connection", (client) => {
-    console.log(`new connection from ${client.remoteAddress}:${client.remotePort}`)
-    client.on("data", (data) => {
-        console.log("from client: " + data.toString());
-        if (data.toString() == "test") {
-          client.write("clientstop")
-        }
-    })
-    client.on("close", () => {
-        console.log("client closed?")
-    })
-    client.on("error", (err) => {
-        console.log("error apparently received:")
-        console.log(err)
-    })
-    //server.write("data");
-    client.write("hellothere, i am server")
-})
+client.on('data', (data) => {
+  console.log("from server: " + data.toString());
+  message = data.toString();
+  sent = true;
+  if (data.toString() == "middlestop") {
+    console.log("ok i am middleman stopping now")
+    client.end();
+  }
+});
+client.on('end', () => {
+  console.log('disconnected from server');
+  connected = false;
+});
 
-server.on("error", (e) => {
-    if (e.code === "EADDRINUSE") {
-        console.log("Address already in use. Close and reopen?")
-        setTimeout(() => {
-            server.close()
-            server.listen(PORTNUM, ADDRESS);
-        }, 1000)
-    } else {
-        console.log("server has error? here:")
-        console.log(e)
+//communication with client (placeholder using HTTP for now)
+app.get("/checksum", [giveHTML, queryRefine, processQuery]);
+
+function giveHTML(req, res, next) {
+	res.format({
+		"application/json": () => {
+            //you may need to set headers to get here
+			console.log("try to give json")
+			next()
+		},
+		"text/html": () => {
+			console.log("try to give html")
+            //the html is raw and will need client.js to get json
+			fs.readFile(`./static/client.html`, function(error, data){
+			  if(error){
+				res.status(500).send("Server Error");
+				//throw error;
+				return;
+			  }
+			  res.status(200).send(data);
+			})
+		}
+	})
+}
+
+function queryRefine(req, res, next) {
+    let query = req.query
+    if (!(query.hasOwnProperty("message"))) {
+        res.status(400).send("you need a query parameter called message")
+        return
     }
-})
+    res.locals.messageValue = query.message
+    next();
+}
+
+function processQuery(req, res, next) {
+    if (connected == false) {
+        res.status(500).send("error: C/QNX server unreachable")
+        console.log("error: C/QNX server unreachable")
+    } else {
+        console.log("send message to server")
+        client.write(res.locals.messageValue)
+
+        console.log("waiting for response from C")
+        let time = 1;
+        function waitForMsg() {
+            if (sent == true) {
+                console.log(`waited ${time}ms, got response`)
+                res.status(200).json({message:message})
+                sent = false;
+                console.log("message sent to client")
+            } else {
+                //console.log(`waited ${time}ms, nothing yet`)
+                time += 1;
+                setTimeout(waitForMsg, 1)
+            }
+        }
+        let timeout = setTimeout(waitForMsg, 1)
+    }
+}
+
+app.listen(3000);
+console.log("Server listening at http://localhost:3000");

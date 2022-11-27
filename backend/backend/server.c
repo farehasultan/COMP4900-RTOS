@@ -82,7 +82,7 @@ int main() {
 		}
 		printf("[SERVER] Closing client connection.\n");
 		close(clientSocket); // Closes the client's socket
-		//if (strcmp(buffer,"stop") == 0)
+		if (strcmp(buffer,"stop") == 0)
 			break;
 	}
 
