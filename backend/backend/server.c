@@ -6,28 +6,36 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <pthread.h>
 
 #define SERVER_PORT    6000 // Port for the QNX back-end server
 #define NUM_CLIENTS    1    // Number of clients the server will handle
 #define MAX_STRING_LEN 255  // Max string length for the server's buffer
 
-int calculate_checksum(char *text);
+#define RPM_MAX           12000.0
+#define ACCELERATION_RATE 200.0
+#define FUEL_MAX          10000
+#define FUEL_DRAIN_RATE   5
+#define FUEL_EMPTY        0
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
+
 // declare a struct with two properties
 // instantiate a new struct
 struct Car {
-  int engine_start;
-  char someString[MAX_STRING_LEN];
-  float rpm;
-  int fuel_amount;
+    int engine_start;
+    char someString[MAX_STRING_LEN];
+    float rpm;
+    unsigned int fuel_amount;
 } car;
 
+void *engine_check(void *);
 
 int main() {
 	int serverSocket, clientSocket;
 	struct sockaddr_in serverAddress, clientAddr;
-	int status, addrSize, bytesRcv;
-	char buffer[MAX_STRING_LEN + 1]; // +1 for null terminator
-	char response[MAX_STRING_LEN + 1];
+	int status, addrSize;
 
 	// Create the server socket
 	serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -82,8 +90,6 @@ int main() {
 		}
 		printf("[SERVER] Closing client connection.\n");
 		close(clientSocket); // Closes the client's socket
-		if (strcmp(buffer,"stop") == 0)
-			break;
 	}
 
 	// Closes the server's socket
@@ -91,13 +97,16 @@ int main() {
 	printf("[SERVER] Shutting down.\n");
 }
 
-int calculate_checksum(char *text) {
-	char *c;
-	int cksum = 0;
-
-	for (c = text; *c != '\0'; c++)
-		cksum += *c;
-	return cksum;
+void *engine_check(void *arg) {
+	while (1) {
+		pthread_mutex_lock(&mutex);
+		if (car.engine_start) {
+			car.rpm         = (car.rpm + ACCELERATION_RATE <= RPM_MAX) ? car.rpm + ACCELERATION_RATE : RPM_MAX;
+			car.fuel_amount = (car.fuel_amount >= FUEL_DRAIN_RATE) ? car.fuel_amount - FUEL_DRAIN_RATE : FUEL_EMPTY;
+		}
+		pthread_mutex_unlock(&mutex);
+	}
+	return (NULL);
 }
 
 
