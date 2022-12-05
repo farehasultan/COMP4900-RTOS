@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/json.h>
 
 #define SERVER_PORT    6000 // Port for the QNX back-end server
 #define NUM_CLIENTS    1    // Number of clients the server will handle
@@ -108,5 +109,33 @@ void *engine_check(void *arg) {
 	}
 	return (NULL);
 }
+
+//const char* prepare_json(){
+//	json_encoder_t *enc = json_encoder_create();
+//	json_encoder_start_object(enc,NULL);
+//	json_encoder_add_int(enc, "id", 1); //set id 1 by default
+//	json_encoder_start_object(enc, "info");
+//	json_encoder_add_int(enc, "engine_start", car.engine_start);
+//	json_encoder_add_string(enc, "someString", car.someString);
+//	json_encoder_add_int(enc, "fuel_amount", car.fuel_amount);
+//	json_encoder_end_object(enc);
+//	json_encoder_end_object(enc);
+//	json_encoder_error_t status = json_encoder_get_status(enc);
+//
+//	// If everything above has succeeded, json_encoder_get_status() will return
+//	// JSON_ENCODER_OK
+//	if ( status != JSON_ENCODER_OK ) {
+//		printf("Data preparation failed\\n");
+//		return false;
+//	}
+//
+//	// Write the JSON data into the string space
+//	char str[json_encoder_length(enc)*100];
+//	snprintf(str, sizeof(str), "%s", json_encoder_buffer(enc));
+//	json_encoder_destroy(enc);
+//	printf("%s \\n",str);
+//	return str;
+//
+//}
 
 

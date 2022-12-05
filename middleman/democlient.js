@@ -34,20 +34,35 @@ strings.encode('Vroom', car.someString);
 
 
 
-// pass this to c, and it will be able to parse it
-// console.log(car.rawBuffer)
-// console.log(car.engine_start);
-// console.log(strings.decode(car.someString));
-
-
 var client = new net.Socket();
 client.connect(PORTNUM, ADDRESS, () => {
   console.log('connected to server?');
     //client.write('test');
   client.write(car.rawBuffer);
   console.log("Client Sent Data!");
-  
 })
+
+function fireStart() {
+  car.engine_start = 1;
+  client.write(car.rawBuffer);
+  console.log("Client Sent Data!");
+}
+function stop() {
+  car.engine_start = 0;
+  client.write(car.rawBuffer);
+  console.log("Client Sent Data!");
+}
+
+
+
+// pass this to c, and it will be able to parse it
+// console.log(car.rawBuffer)
+// console.log(car.engine_start);
+// console.log(strings.decode(car.someString));
+
+
+
+
 client.on('data', (data) => {
   convert(data.buffer); //here
   if (data.toString() == "clientstop") {
@@ -56,6 +71,7 @@ client.on('data', (data) => {
   }
 
 });
+
 client.on('end', () => {
   console.log('disconnected from server');
 });
@@ -73,6 +89,8 @@ function convert(data) {
   offset += 4;
   strings.encode(buffer.toString('utf8', offset), car.someString);
   offset += 252;
+  // float rpm;
+  // int fuel_amount;
 
   console.log("[CLIENT]: Receive from server");
   console.log(car.engine_start);

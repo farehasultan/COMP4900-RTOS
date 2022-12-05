@@ -14,7 +14,7 @@ TARGET = -Vgcc_ntox86_64
 #TARGET = -Vgcc_ntoaarch64le
 
 
-CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket
+CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket -lm -ljson
 LDFLAGS+= $(DEBUG) $(TARGET)
 BINS = server
 all: $(BINS)

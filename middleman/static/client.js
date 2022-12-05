@@ -1,4 +1,5 @@
 const socket = io()
+
 console.log("socket constant created")
 
 function init(){
@@ -22,3 +23,25 @@ function messagesend(){
 function updateDiv(data){
     //set inner html of item with results_div id using data
 }
+
+//EVENT LISTENERS FOR W KEY:
+let w = document.getElementById('testing-keys');
+
+  w.addEventListener('keydown', (e) => {
+    if (e.key === 'w' && !e.repeat) {
+      console.log(`Key "${e.key}" pressed [event: keydown]`);
+        fireStart();
+    } else {
+      if (e.key === 'w') {
+        console.log(`Key "${e.key}" repeating [event: keydown]`);
+      }
+    }
+  });
+
+
+textarea.addEventListener('keyup', (e) => {
+  if (e.key === 'w') {
+    console.log(`Key "${e.key}" released [event: keyup]`);
+      stop();
+  }
+});
