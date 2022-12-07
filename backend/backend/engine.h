@@ -26,9 +26,6 @@
 #define MAXRPM            12000
 #define MINRPM            1500
 
-pthread_mutex_t mutex;
-volatile float throttle;
-
 //full cycle is 720 degrees
 //stage changes register at their exact start
 //all cylinder math is calculated at the start, even if the real forces occur over time afterwards
@@ -56,7 +53,7 @@ int    stagecalc(char, int*, float, double);
 double calcRPM(int);
 long   rpmToEventNS(double);
 void   initEngine(engine_data_t*);
-void*  engine();
+double engine(float, engine_data_t*);
 
 int stagecalc(char stage, int *force, float throttle, double rpm) {
 	float useThrottle = throttle;
@@ -123,43 +120,36 @@ void initEngine(engine_data_t *engine_data) {
 	}
 }
 
-void* engine() {
-	engine_data_t engine_data;
-	initEngine(&engine_data);
-	float localThrottle; //0 to 1
-
-	while (1) {
-		pthread_mutex_lock(&mutex);
-		localThrottle = throttle;
-		pthread_mutex_unlock(&mutex);
-		//increase angle by 60 for everything, process state changes
-		int totalforce = 0;
-		for (int i=0; i < NUM_CYL; i++) {
-			engine_data.cylinders[i].angle = (engine_data.cylinders[i].angle + 60) % 180;
-			if (engine_data.cylinders[i].angle == 0) { //next stage
-				//only stage transitions influence calculations
-				engine_data.cylinders[i].stage = (engine_data.cylinders[i].stage + 1) % 4;
-				stagecalc(engine_data.cylinders[i].stage, &engine_data.currentforce, localThrottle, engine_data.afterRPM);
-				totalforce += engine_data.currentforce;
-			}
-		}
-		engine_data.enginejoules += totalforce;
-		//never go below 0
-		if (engine_data.enginejoules < 0) {engine_data.enginejoules = 0;}
-
-		engine_data.afterRPM = calcRPM(engine_data.enginejoules);
-		engine_data.waitTime = rpmToEventNS(engine_data.afterRPM);
-		engine_data.carryoverTime += engine_data.waitTime;
-		if (engine_data.carryoverTime > NS_TO_WAIT) {
-			engine_data.nswait = (engine_data.carryoverTime / NS_TO_WAIT) * NS_TO_WAIT; //nswait_factor * 1000;
-			engine_data.carryoverTime = engine_data.carryoverTime % NS_TO_WAIT;
-			engine_data.nextevent.tv_sec = 0;
-			engine_data.nextevent.tv_nsec = engine_data.nswait;
-			printf("rpm:%f (%dJ), ns:%ld, wait=%ld, carry=%ld, throttle=%f.1\t\r", engine_data.afterRPM, engine_data.enginejoules,
-					engine_data.waitTime, engine_data.nswait, engine_data.carryoverTime, localThrottle);
-			nanosleep(&engine_data.nextevent, NULL);
+double engine(float throttle, engine_data_t *engine_data) {
+	//increase angle by 60 for everything, process state changes
+	int totalforce = 0;
+	for (int i=0; i < NUM_CYL; i++) {
+		engine_data->cylinders[i].angle = (engine_data->cylinders[i].angle + 60) % 180;
+		if (engine_data->cylinders[i].angle == 0) { //next stage
+			//only stage transitions influence calculations
+			engine_data->cylinders[i].stage = (engine_data->cylinders[i].stage + 1) % 4;
+			stagecalc(engine_data->cylinders[i].stage, &engine_data->currentforce, throttle, engine_data->afterRPM);
+			totalforce += engine_data->currentforce;
 		}
 	}
+	engine_data->enginejoules += totalforce;
+	//never go below 0
+	if (engine_data->enginejoules < 0) {engine_data->enginejoules = 0;}
+	engine_data->afterRPM = calcRPM(engine_data->enginejoules);
+	return engine_data->afterRPM;
+
+	/*
+	engine_data.carryoverTime += engine_data.waitTime;
+	if (engine_data.carryoverTime > NS_TO_WAIT) {
+		engine_data.nswait = (engine_data.carryoverTime / NS_TO_WAIT) * NS_TO_WAIT; //nswait_factor * 1000;
+		engine_data.carryoverTime = engine_data.carryoverTime % NS_TO_WAIT;
+		engine_data.nextevent.tv_sec = 0;
+		engine_data.nextevent.tv_nsec = engine_data.nswait;
+		printf("rpm:%f (%dJ), ns:%ld, wait=%ld, carry=%ld, throttle=%f.1\t\r", engine_data.afterRPM, engine_data.enginejoules,
+				engine_data.waitTime, engine_data.nswait, engine_data.carryoverTime, localThrottle);
+		nanosleep(&engine_data.nextevent, NULL);
+	}
+	*/
 }
 
 #endif
