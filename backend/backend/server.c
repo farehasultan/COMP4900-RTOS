@@ -25,10 +25,8 @@ pthread_cond_t  cond  = PTHREAD_COND_INITIALIZER;
 // declare a struct with two properties
 // instantiate a new struct
 struct Car {
-    int engine_start;
-    char someString[MAX_STRING_LEN];
-    float rpm;
-    unsigned int fuel_amount;
+	float throttle ;
+	double rpm;
 } car;
 
 void *engine_check(void *);
@@ -37,6 +35,8 @@ int main() {
 	int serverSocket, clientSocket;
 	struct sockaddr_in serverAddress, clientAddr;
 	int status, addrSize;
+	float throttle;
+	double rpm;
 
 	// Create the server socket
 	serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -78,14 +78,14 @@ int main() {
 		// Go into infinite loop to talk to client
 		while (1) {
 			// Get the message from the client
-			recv(clientSocket, &car, sizeof(car), 0);
+			recv(clientSocket, &throttle, sizeof(car), 0);
 			printf("[SERVER] Received client request\n");
-			printf("Message received is: engine_start = %d and someString is %s \n", car.engine_start, car.someString);
+			printf("Received throttle from client %f \n",throttle);
 
 
 			printf("[SERVER] Sending back data ! \n");
-			strncpy(car.someString, "Running", MAX_STRING_LEN);
-			send(clientSocket, &car, sizeof(car), 0);
+			rpm=2.34542;
+			send(clientSocket, &rpm, sizeof(car), 0);
 			//if ((strcmp(buffer,"done") == 0) || (strcmp(buffer,"stop") == 0))
 				break;
 		}
@@ -98,6 +98,11 @@ int main() {
 	printf("[SERVER] Shutting down.\n");
 }
 
+
+/*
+ * no need for engine check as we got rid of multiple properties for the struct car
+ */
+/*
 void *engine_check(void *arg) {
 	while (1) {
 		pthread_mutex_lock(&mutex);
@@ -109,7 +114,7 @@ void *engine_check(void *arg) {
 	}
 	return (NULL);
 }
-
+*/
 //const char* prepare_json(){
 //	json_encoder_t *enc = json_encoder_create();
 //	json_encoder_start_object(enc,NULL);
