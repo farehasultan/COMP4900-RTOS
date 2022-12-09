@@ -40,7 +40,8 @@ client.connect(PORTNUM, ADDRESS, () => {
     connected = true;
     //client.write('test');
 })
-client.on('data', (data) => {
+client.on('data', (data2) => {
+  data = convert(data2)
   console.log("from server: " + data.toString());
   message = data.toString();
   sent = true;
@@ -95,7 +96,12 @@ function processQuery(req, res, next) {
         console.log("error: C/QNX server unreachable")
     } else {
         console.log("send message to server")
-        client.write(res.locals.messageValue)
+        const buffer = Buffer.alloc(4)
+        const givefloat = parseFloat(res.locals.messageValue)
+        console.log("send float: " + givefloat)
+        buffer.writeFloatLE(givefloat, 0)
+
+        client.write(buffer)
 
         console.log("waiting for response from C")
         let time = 1;
@@ -113,6 +119,20 @@ function processQuery(req, res, next) {
         }
         let timeout = setTimeout(waitForMsg, 1)
     }
+}
+
+/***
+ * The convert function converts the data received from the server into a readable format and updates
+ * the struct.
+ * [NOTE: I still need to add more stuff in the struct so this will keep getting updated]
+ */
+let receivingRPM;
+function convert(data) {
+  const buffer = Buffer.from(data);
+  let offset = 0;
+  receivingRPM = buffer.readDoubleLE(offset);
+  console.log("The rpm is : ", receivingRPM);
+  return receivingRPM
 }
 
 app.listen(3000);
