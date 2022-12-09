@@ -16,6 +16,9 @@ const express = require('express'); //to make middleman serve browser/client
 const net = require('net'); //to talk to C/QNX
 const fs = require("fs"); //so the middleman can read files
 const app = express();
+const http = require('http').createServer(app);
+// Create a Socket.IO instance, passing it our server
+const socket = require('socket.io')(http)
 
 app.use(express.static("static")); //serve client resources
 app.use(express.json()); //automatically parse json
@@ -32,6 +35,36 @@ PORTNUM = 6000  // The port used by the server
 var connected = false;
 var message = undefined;
 var sent = false;
+let receivingRPM;
+let throttle = 0.0;
+
+/***
+ * The convert function converts the data received from the server into a readable format and updates
+ * the struct.
+ * [NOTE: I still need to add more stuff in the struct so this will keep getting updated]
+ */
+
+function convert(data) {
+  const buffer = Buffer.from(data);
+  let offset = 0;
+  receivingRPM = buffer.readDoubleLE(offset);
+  //console.log("The rpm is : ", receivingRPM);
+  return receivingRPM
+}
+
+socket.on('connection', function(client){
+    console.log('Connection event listener created')
+    console.log("Id of client was:", client.id)
+
+    client.on('throttle', (data) => {
+        throttle = parseFloat(data["throttle"])
+    })
+
+    client.on('disconnect', function(){
+        console.log('Server has disconnected');
+        console.log("Id of client was:", client.id)
+    })
+})
 
 //communication with C/QNX
 var client = new net.Socket();
@@ -40,30 +73,46 @@ client.connect(PORTNUM, ADDRESS, () => {
     connected = true;
     //client.write('test');
 })
-client.on('data', (data2) => {
-  data = convert(data2)
-  console.log("from server: " + data.toString());
-  message = data.toString();
+client.on('data', (data) => {
+  //data = convert(data2)
+  //console.log("from server: " + data.toString());
+  receivingRPM = parseFloat(convert(data))
+  //console.log(receivingRPM)
+  /*message = data.toString();
   sent = true;
   if (data.toString() == "middlestop") {
     console.log("ok i am middleman stopping now")
     client.end();
-  }
+  }*/
+  //send back just as soon as we receive; talk back and forth
+  sendToServer()
+  socket.emit("display", receivingRPM)
 });
 client.on('end', () => {
   console.log('disconnected from server');
   connected = false;
 });
 
+function sendToServer() {
+    const buffer = Buffer.alloc(4)
+    const givefloat = parseFloat(throttle)
+    buffer.writeFloatLE(givefloat, 0)
+    client.write(buffer)
+}
+
+//start the first call, then the one in client.on('data') will do the rest
+sendToServer()
+
 //communication with client (placeholder using HTTP for now)
-app.get("/checksum", [giveHTML, queryRefine, processQuery]);
+app.get("/engine", [giveHTML])//, queryRefine, processQuery]);
 
 function giveHTML(req, res, next) {
 	res.format({
 		"application/json": () => {
             //you may need to set headers to get here
 			console.log("try to give json")
-			next()
+            res.status(500).send("Server Error");
+            //next()
 		},
 		"text/html": () => {
 			console.log("try to give html")
@@ -80,7 +129,7 @@ function giveHTML(req, res, next) {
 	})
 }
 
-function queryRefine(req, res, next) {
+/*function queryRefine(req, res, next) {
     let query = req.query
     if (!(query.hasOwnProperty("message"))) {
         res.status(400).send("you need a query parameter called message")
@@ -119,21 +168,8 @@ function processQuery(req, res, next) {
         }
         let timeout = setTimeout(waitForMsg, 1)
     }
-}
+}*/
 
-/***
- * The convert function converts the data received from the server into a readable format and updates
- * the struct.
- * [NOTE: I still need to add more stuff in the struct so this will keep getting updated]
- */
-let receivingRPM;
-function convert(data) {
-  const buffer = Buffer.from(data);
-  let offset = 0;
-  receivingRPM = buffer.readDoubleLE(offset);
-  console.log("The rpm is : ", receivingRPM);
-  return receivingRPM
-}
 
-app.listen(3000);
+http.listen(3000);
 console.log("Server listening at http://localhost:3000");

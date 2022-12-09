@@ -4,20 +4,29 @@
   </head>
 
   <body onload="init()">
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/client.js"></script>
-    <script src="../democlient.js"></script>
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="/client.js"></script>
+
       <div>
-      <h1>Checksum Calculator (for now)</h1>
+      <h1>Formula 1 Engine Simulator</h1>
+      <ul>
+      <li>Here you will see live updates of the F1 Engine's RPM. The throttle setting will influence its speed.</li>
+      <li>Enter a throttle setting between 0.00 and 1.00 into the textbox to change the engine's throttle setting.</li>
+      <li>0.00 represents minimum throttle, 1.00 represents maximum throttle.</li>
+      <li> If you enter a number outside of this range, it will be adjusted to be within this range.</li>
+      <li>The engine requires a throttle of ~0.33 or higher for it to maintain speed.</li>
+      <li>Throttles below 0.33 will deaccelerate the engine, while above will accelerate the engine.</li>
+      <li>The engine will override your throttle if it is below 1500 RPM (if it's less than this value: 0.01 per 1RPM below) to achieve idle RPM. This usually is 1467 RPM.</li>
+      <li>The engine will hard-cut your throttle to 0 if the RPM is above 12000. Use throttle values like 0.334 to observe this better.</li>
+      </ul>
       Enter a message and have it sent to the server. You will get back a response<br>
-      Message: <input type="textbox" id="messageinput" size="50">
-      <button type="button" id="messagesend" onclick="messagesend()">Send</button><br>
+      Message: <input type="textbox" id="messageInput" size="50">
+      <button type="button" id="messageSend" onclick="messagesend()">Send</button><br>
     </div>
-    <h2>Returned Message</h2>
+    <h3>Last Throttle Setting:</h3>
+    <div id="throttle_div"></div>
+    <h2>Returned RPM:</h2>
     <div id="results_div"></div>
-
-    <div id="testing-keys"></div>
-
 
   </body>
 
