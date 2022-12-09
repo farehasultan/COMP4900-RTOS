@@ -16,7 +16,7 @@ TARGET = -Vgcc_ntox86_64
 
 CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket -lm -ljson
 LDFLAGS+= $(DEBUG) $(TARGET)
-BINS = server
+BINS = backend
 all: $(BINS)
 
 clean:
