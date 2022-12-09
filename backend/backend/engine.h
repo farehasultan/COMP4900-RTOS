@@ -122,9 +122,11 @@ void initEngine(engine_data_t *engine_data) {
 
 double engine(float throttle, engine_data_t *engine_data) {
 	//repeat engine calculations until 10ms of virtual time has passed
+	int totalforce;
+	//int counter = 0;
 	while(engine_data->carryoverTime < NS_TO_WAIT) {
 		//increase angle by 60 for everything, process state changes
-		int totalforce = 0;
+		totalforce = 0;
 		for (int i=0; i < NUM_CYL; i++) {
 			engine_data->cylinders[i].angle = (engine_data->cylinders[i].angle + 60) % 180;
 			if (engine_data->cylinders[i].angle == 0) { //next stage
@@ -138,8 +140,10 @@ double engine(float throttle, engine_data_t *engine_data) {
 		//never go below 0
 		if (engine_data->enginejoules < 0) {engine_data->enginejoules = 0;}
 		engine_data->afterRPM = calcRPM(engine_data->enginejoules);
-		engine_data->carryoverTime = rpmToEventNS(engine_data->afterRPM);
+		engine_data->carryoverTime += rpmToEventNS(engine_data->afterRPM);
 		//printf("rpm:%f carry=%ld\t\r", engine_data->afterRPM, engine_data->carryoverTime);
+		//counter+= 1;
+		//printf("counter=%d\n", counter);
 	}
 	//if carryoverTime / NS_TO_WAIT is 2 or greater, then what should be 20ms or greater will still be 10ms
 	//this is because it's only a problem below idle RPM
