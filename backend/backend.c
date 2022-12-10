@@ -63,6 +63,7 @@ void* pulseHandler() {
 			switch (msg.pulse.code) {
 				case ENGINE_PULSE_EVENT:
 					// Updates the engine with the current throttle information so it can do its next cycle
+					// Retrieves the RPM after the cycle is complete for the server to send back
 					pthread_mutex_lock(&mutex);
 					globalRPM = engine(globalThrottle, &engine_data);
 					pthread_mutex_unlock(&mutex);
