@@ -1,11 +1,11 @@
 
 #
-#	Makefile for hello project
+#	Makefile for backend.c
 #
 
 DEBUG = -g
-CC = qcc
-LD = qcc
+CC    = qcc
+LD    = qcc
 
 
 TARGET = -Vgcc_ntox86_64
@@ -14,12 +14,11 @@ TARGET = -Vgcc_ntox86_64
 #TARGET = -Vgcc_ntoaarch64le
 
 
-CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket -lm
-LDFLAGS+= $(DEBUG) $(TARGET)
-BINS = backend
+CFLAGS  += $(DEBUG) $(TARGET) -Wall -l socket -lm
+LDFLAGS += $(DEBUG) $(TARGET)
+BINS     = backend
 all: $(BINS)
 
 clean:
 	rm -f *.o $(BINS);
-#	cd solutions; make clean
 
