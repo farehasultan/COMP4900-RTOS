@@ -1,6 +1,6 @@
-# Formula 1 Racecar Simulator
+# Formula 1 Racecar Engine Simulator
 
-Simulation of a F1 Engine using RTOS
+An application that simulates the interactions and reactions a RTOS must perform to reliably control the engine of a Formula 1 racing car. 
 
 ## Authors
 
