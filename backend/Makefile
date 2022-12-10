@@ -14,7 +14,7 @@ TARGET = -Vgcc_ntox86_64
 #TARGET = -Vgcc_ntoaarch64le
 
 
-CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket -lm -ljson
+CFLAGS += $(DEBUG) $(TARGET) -Wall -l socket -lm
 LDFLAGS+= $(DEBUG) $(TARGET)
 BINS = backend
 all: $(BINS)
